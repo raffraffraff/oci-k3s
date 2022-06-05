@@ -1,0 +1,56 @@
+apiVersion: k0sctl.k0sproject.io/v1beta1
+kind: Cluster
+metadata:
+  name: k0s-cluster
+spec:
+  hosts:
+  - ssh:
+      address: k8s1.example.com
+      user: ubuntu
+      port: 22
+      keyPath: /home/username/.ssh/id_ed25519
+    role: controller+worker
+    noTaints: true
+    installFlags:
+      - --disable-components konnectivity-server
+      - --disable-components metrics-server
+  - ssh:
+      address: k8s2.example.com
+      user: ubuntu
+      port: 22
+      keyPath: /home/username/.ssh/id_ed25519
+    role: controller+worker
+    noTaints: true
+    installFlags:
+      - --disable-components konnectivity-server
+      - --disable-components metrics-server
+  - ssh:
+      address: k8s3.example.com
+      user: ubuntu
+      port: 22
+      keyPath: /home/username/.ssh/id_ed25519
+    role: controller+worker
+    noTaints: true
+    installFlags:
+      - --disable-components konnectivity-server
+      - --disable-components metrics-server
+  - ssh:
+      address: k8s4.example.com
+      user: ubuntu
+      port: 22
+      keyPath: /home/username/.ssh/id_ed25519
+    role: controller+worker
+    noTaints: true
+    installFlags:
+      - --disable-components konnectivity-server
+      - --disable-components metrics-server
+  k0s:
+    version: 1.23.6+k0s.1
+    config:
+      spec:
+        telemetry:
+          enabled: false
+        api:
+          externalAddress: k8sapi.example.com
+          sans:
+          - k8sapi.example.com
