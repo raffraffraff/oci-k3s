@@ -88,11 +88,10 @@ NOTES:
    - k8s2.example.com - node2's public IP
    - k8s3.example.com - node3's public IP
    - k8s4.example.com - node4's public IP
-
-3. Add _internal IP addresses_ for all 4 host FQDNs to `/etc/hosts` on _all hosts_
-4. Run `k0sctl apply --disable-telemetry`
-5. Run `./ingress.sh`
-6. Run `./webapp.sh`
+2. Add _internal IP addresses_ for all 4 host FQDNs to `/etc/hosts` on _all hosts_
+3. Update `k0sctl.yaml` with your ssh key / node details and run `k0sctl apply --disable-telemetry`
+4. Run `./ingress.sh`
+5. Run `./webapp.sh`
 
 Once that's all done, you should have a working website running on www.example.com!
 
