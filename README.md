@@ -69,13 +69,16 @@ Since I don't have this stuff terraformed yet, here's the list of steps you need
    - Ubuntu 20.04
    - Attach the network security group
 5. Back up the iptables rules!
-6. Allow all traffic from your home IP address (you can open this up to the world if you want but I don't adivse it)
-7. Create a standard load balancer:
+6. Allow all traffic from your home IP address:
+   - `sudo iptables -I INPUT -p tcp -s 1.2.3.4/32 -j ACCEPT`
+8. Create a standard load balancer:
    - Attach Network Security Group
    - Create separate TCP backends for ports: 80, 443, 6443, 9443, 8???
    - Create separate TCP listeners for each port, pointing to the correct backend
 
-NOTE: Good luck creating the VMs! I kept getting an error that indicated that Oracle were out of resources. That's the free tier for you! Just keep retrying those operations (I used the `oci` cli in a script and kept on retrying until I got all 4 machines).
+NOTES:
+* Good luck creating the VMs! I kept getting an error that indicated that Oracle were out of resources. That's the free tier for you! Just keep retrying those operations (I used the `oci` cli in a script and kept on retrying until I got all 4 machines)
+* I think the free tier is supposed to allow you to create a Network Load Balancer, but I couldn't do this without adding a credit card, hence I used a standard load balancer
 
 ## Next steps (ssh, kubectl)
 1. Register DNS A records for _your domain_ matching these:
