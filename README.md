@@ -1,5 +1,6 @@
-# Pre-requisites
-1. Create an account on Oracle Cloud
+# Quick start
+## Pre-requisites
+1. Oracle Cloud account (sign up [here](https://signup.cloud.oracle.com0)
 2. Register a domain (you can use an existing domain either)
 3. Download and install the following:
    - terraform
