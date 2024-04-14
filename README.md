@@ -28,9 +28,6 @@ This project contains two modules:
 - network: deploys VCN, security groups and rules, load balancers etc
 - cluster: deploys instance pools for k3s server(s) and workers
 
-# k3s
-Huh, this project says `k0s`, wtf? Well, I honestly had too many issues with k0s so I dropped it for now.
-
 ## Cluster setup
 - 1x server
 - 3x workers
