@@ -43,8 +43,8 @@ To make it easier to deploy real stuff to the cluster, we still need:
 The biggest issue I have with simply auto-installing these two is that you might want to use HTTPS01 or DNS01 ACME challenges. If you use the latter, you might want to use your own DNS provider. Personally, I use Cloudflare for a bunch of stuff, so that's what I'm using. But there may not be much point in adding all that junk to this project, except maybe in a separate directory. 
 
 # Usage
-## Create an end.auto.tfvars file...
-The contents of this file will be specific to you. Here's what I've got in mine (with fake details of course):
+## Create an `env.auto.tfvars` file
+This file should be placed in the root of the project. Its contents will specific to your OCI account. Here's what I've got in mine (with totally fake details, of course):
 ```
 compartment_ocid = "ocid1.tenancy.oc1..aaaaaaaaffdnionfsfnseifonvosfn32g4i3no6ih9gewenewowntio32nos"
 tenancy_ocid     = "ocid1.tenancy.oc1..aaaaaaaaffdnionfsfnseifonvosfn32g4i3no6ih9gewenewowntio32nos"
