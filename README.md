@@ -16,7 +16,7 @@ This whole setup is opinionated, but it gets the best out of Oracle's generous "
 - 1 Network Load Balancer (public access for http/https/kubeapi)
 - 4 VMs with 1 Ampere (ARM) CPU, 6GB memory and 50GB disk
 
-DISCLAIMER: The Ampere A1 instance shape used in this project is eligible for the free tier. But I found it extremely difficult to deploy this project due to reports that OCI are out of capacity in my region there's no capacity in your region. I also found it impossible to deploy instance pools with more than 2 instances. As soon as I upgraded my account (ie added a credit card) I was able to reliably deploy my cluster, every time, and use a 3x node instance pool for the workers. So while this project will still deploy a completely free cluster, it doesn't work unless you convert to a paid account!
+DISCLAIMER: The Ampere A1 instance shape used in this project is eligible for the free tier. But I found it extremely difficult to deploy this project, with OCI reporting that these instances are at full capacity in my region. I also found it impossible to deploy an instance pool with more than 2 instances in it (which I wanted for my workers). I decided to upgrade my account (which requires a credit card). And just like that, I could reliably deploy all 4 instances, and the worker instance pool had no problem with 3x instances.
 
 ## Network Security
 - Security Lists apply to all VNICs in the VCN. We'll use that to allow ssh (22) access from our home IP address
