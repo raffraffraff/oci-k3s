@@ -1,14 +1,3 @@
-# Before you begin
-## Pre-requisites
-1. Oracle Cloud account (sign up [here](https://signup.cloud.oracle.com0))
-2. Register a domain (you can register a .com for the price of two coffees)
-3. Download and install the following:
-   - [terraform](https://www.terraform.io/downloads)
-   - [kubectl](https://kubernetes.io/docs/tasks/tools)
-   - [helm](https://helm.sh/docs/intro/install)
-   - [jq](https://stedolan.github.io/jq/download)
-   - [oci-cli](https://github.com/oracle/oci-cli/releases)
-
 # Oracle OCI Free Tier
 This whole setup is opinionated, but it gets the best out of Oracle's generous "always free" tier:
 - 1 VCN (a virtual network, like AWS VPC)
@@ -16,18 +5,31 @@ This whole setup is opinionated, but it gets the best out of Oracle's generous "
 - 1 Network Load Balancer (public access for http/https/kubeapi)
 - 4 VMs with 1 Ampere (ARM) CPU, 6GB memory and 50GB disk
 
-DISCLAIMER: The Ampere A1 instance shape used in this project is eligible for the free tier. But I found it extremely difficult to deploy this project, with OCI reporting that these instances are at full capacity in my region. I also found it impossible to deploy an instance pool with more than 2 instances in it (which I wanted for my workers). I decided to upgrade my account (which requires a credit card). And just like that, I could reliably deploy all 4 instances, and the worker instance pool had no problem with 3x instances.
+DISCLAIMERS:
+
+1. The Ampere A1 instance shape used in this project is eligible for the free tier. But I found it extremely difficult to deploy this project, with OCI reporting that these instances are at full capacity in my region. I also found it impossible to deploy an instance pool with more than 2 instances in it (which I wanted for my workers). I decided to upgrade my account (which requires a credit card). And just like that, I could reliably deploy all 4 instances, and the worker instance pool had no problem with 3x instances. So this project basically requires an upgraded OCI account with a credit card on it. (But it still shouldn't cost you anything)
+
+2. This is a brittle setup, because it deploys a single k3s server and 3x workers. I took this approach because I'm not going to run anything critical on it. I may tinker with it later, and perhaps try 3x servers and 1x dedicated worker, and allow workloads to run on the servers. If you use this project and decide to try that out, send me a pull request if it works!
+
+# Before you begin
+## Pre-requisites
+1. Oracle Cloud account (sign up [here](https://signup.cloud.oracle.com0) and upgrade to a paid account)
+2. Download and install the following:
+   - [terraform](https://www.terraform.io/downloads)
+   - [kubectl](https://kubernetes.io/docs/tasks/tools)
+   - [helm](https://helm.sh/docs/intro/install)
+   - [jq](https://stedolan.github.io/jq/download)
+   - [oci-cli](https://github.com/oracle/oci-cli/releases)
 
 ## Network Security
 Some facts about OCI:
-- Security Lists apply to all VNICs in the VCN. We'll use that to allow ssh (22) access from our home IP address
-- Network Security Groups only apply where they are attached (eg: VNICs, instances)
-- All load balaancers must use Network Security Groups
+- Security Lists apply to all VNICs in the VCN. We'll use that to allow ssh (port 22) access from our home IP address
+- Network Security Groups only affect resources they're attached to (eg: instances, load balancers)
 
 # Terraform
 This project contains two modules:
 - network: deploys VCN, security groups and rules, load balancers etc
-- cluster: deploys instance pools for k3s server(s) and workers
+- cluster: deploys instance pools for k3s server and workers
 
 ## Cluster setup
 Taking the best possible advantage of OCI's free tier, this project deploys:
