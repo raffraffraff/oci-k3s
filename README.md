@@ -15,7 +15,7 @@ DISCLAIMERS:
 
 1. The Ampere A1 instance shape used in this project is eligible for the free tier. But I found it extremely difficult to deploy this project, with OCI reporting that these instances are at full capacity in my region. I also found it impossible to deploy an instance pool with more than 2 instances in it (which I wanted for my workers). I decided to upgrade my account (which requires a credit card). And just like that, I could reliably deploy all 4 instances, and the worker instance pool had no problem with 3x instances. So this project basically requires an upgraded OCI account with a credit card on it. (But it still shouldn't cost you anything)
 
-2. This is a brittle setup, because it deploys a single k3s server and 3x workers. I took this approach because I'm not going to run anything critical on it. I may tinker with it later, and perhaps try 3x servers and 1x dedicated worker, and allow workloads to run on the servers. If you use this project and decide to try that out, send me a pull request if it works!
+2. This is a brittle setup, because it deploys a single k3s server and 3x workers. I took this approach because I'm not going to run anything critical on it. _That said_, I have had 2 servers on OCI running for over 400 days with zero downtime, so that's good enough for me! I may tinker with this serup later, and perhaps try 3x servers and 1x dedicated worker, with workloads also runing on the servers. If you happen to use this project and decide to make that change yourself, please send me a pull request if it works!
 
 # Before you begin
 ## Pre-requisites
