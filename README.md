@@ -1,9 +1,15 @@
-# Oracle OCI Free Tier
-This whole setup is opinionated, but it gets the best out of Oracle's generous "always free" tier:
-- 1 VCN (a virtual network, like AWS VPC)
-- 1 standard Load Balancer (internal access to kubeapi)
-- 1 Network Load Balancer (public access for http/https/kubeapi)
-- 4 VMs with 1 Ampere (ARM) CPU, 6GB memory and 50GB disk
+# 4 node K3S on Oracle OCI Free Tier
+This project allows you to deploy a real working k3s cluster on the Oracle's generous "always free" tier. You get 1 server and 3 dedicated workers. `kubectl top nodes` looks like this:
+```
+$ kubectl top nodes
+NAME                     CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
+inst-canri-k3s-workers   40m          4%     1000Mi          16%       
+inst-ded0p-k3s-workers   41m          4%     914Mi           15%       
+inst-ign06-k3s-workers   35m          3%     1133Mi          19%       
+inst-nsvzh-k3s-servers   122m         12%    2232Mi          37%
+```
+
+This leaves around ~15gb of memory and most of the 3x ARM CPUs for you to play with. No bad for free! 
 
 DISCLAIMERS:
 
@@ -31,11 +37,6 @@ This project contains two modules:
 - network: deploys VCN, security groups and rules, load balancers etc
 - cluster: deploys instance pools for k3s server and workers
 
-## Cluster setup
-Taking the best possible advantage of OCI's free tier, this project deploys:
-- 1x server
-- 3x workers
-
 Once Kubernetes is running, it also deploys into it:
 - Longhorn (CSI)
 - Traefic ingress controller (installed automatically, using Helm)
@@ -45,8 +46,9 @@ Once Kubernetes is running, it also deploys into it:
 To make it easier to deploy real stuff to the cluster, we still need:
 - cert-manager
 - external-dns
+- a domain!
 
-However, I haven't gotten to this yet. Also, you might want to use HTTPS01 or DNS01 ACME challenges for cert manager, and you might have a totally different DNS provider.
+However, I haven't gotten to this yet. Also, you might want to use HTTPS01 or DNS01 ACME challenges for cert manager, and you might have a totally different DNS provider. I might add my Cloudflare setup to this project, with example `values.yaml` files for cert-manager and external-dns helm charts.
 
 # Deploying it!
 ## Create an `env.auto.tfvars` file
@@ -109,16 +111,3 @@ kubectl config view --flatten
 ```
 
 If the output looks good, pipe it to `~/.kube/config`
-
-# So what do you get in the end?
-A K3s cluster which you can access from your home IP address. Here's the output of `kubectl top nodes`:
-```
-$ kubectl top nodes
-NAME                     CPU(cores)   CPU%   MEMORY(bytes)   MEMORY%   
-inst-canri-k3s-workers   40m          4%     1000Mi          16%       
-inst-ded0p-k3s-workers   41m          4%     914Mi           15%       
-inst-ign06-k3s-workers   35m          3%     1133Mi          19%       
-inst-nsvzh-k3s-servers   122m         12%    2232Mi          37%
-```
-
-This leaves around ~15gb of memory and most of the 3x ARM CPUs for you to play with. No bad for free! 
