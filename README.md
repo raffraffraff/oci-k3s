@@ -10,24 +10,20 @@
    - [oci-cli](https://github.com/oracle/oci-cli/releases)
 
 # Oracle Free Tier
-This whole setup is opinionated. In my opinion it gets the best out of Oracle's generous "always free" tier:
+This whole setup is opinionated, but it gets the best out of Oracle's generous "always free" tier:
 - 1 VCN (a virtual network, like AWS VPC)
-- 1 standard Load Balancer (I couldn't launch a Network LB on the free tier)
-- 4x VMs that each have 1 Ampere (ARM) CPU, 6GB memory and 50GB disk
+- 1 standard Load Balancer (internal access to kubeapi)
+- 1 Network Load Balancer (public access for http/https/kubeapi)
+- 4 VMs with 1 Ampere (ARM) CPU, 6GB memory and 50GB disk
 
-## Quick notes on Load Balancers
-You can use one Load Balancer and one Network Load Balancer on the free tier.
-- Network Load Balancer will be public, used for http (80), https (443) and kubeapi (6443)
-- Load Balancer will be private, used internally by the cluster nodes to reach the kubeapi
+DISCLAIMER: The Ampere A1 instance shape used in this project is eligible for the free tier. But I found it extremely difficult to deploy this project due to reports that OCI are out of capacity in my region there's no capacity in your region. I also found it impossible to deploy instance pools with more than 2 instances. As soon as I upgraded my account (ie added a credit card) I was able to reliably deploy my cluster, every time, and use a 3x node instance pool for the workers. So while this project will still deploy a completely free cluster, it doesn't work unless you convert to a paid account!
 
-## Quick notes on Network Security
-- Security Lists apply to all VNICs in the VCN. We will use that to allow ssh (22) access from our home IP address
+## Network Security
+- Security Lists apply to all VNICs in the VCN. We'll use that to allow ssh (22) access from our home IP address
 - Network Security Groups only apply where they are attached (eg: VNICs, instances)
-- All load balaancers can use Network Security Group
+- All load balaancers must use Network Security Groups
 
-There are other always-free resources (databases, object storage etc) but this project does not use them yet.
-
-# Terraform?
+# Terraform
 This project contains two modules:
 - network: deploys VCN, security groups and rules, load balancers etc
 - cluster: deploys instance pools for k3s server(s) and workers
