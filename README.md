@@ -6,7 +6,6 @@
    - [terraform](https://www.terraform.io/downloads)
    - [kubectl](https://kubernetes.io/docs/tasks/tools)
    - [helm](https://helm.sh/docs/intro/install)
-   - [k0sctl](https://github.com/k0sproject/k0sctl/releases)
    - [jq](https://stedolan.github.io/jq/download)
    - [oci-cli](https://github.com/oracle/oci-cli/releases)
 
@@ -17,81 +16,97 @@ This whole setup is opinionated. In my opinion it gets the best out of Oracle's 
 - 4x VMs that each have 1 Ampere (ARM) CPU, 6GB memory and 50GB disk
 
 ## Quick notes on Load Balancers
-You can only add a single Load Balancer on the free tier, but it supports:
-- Multiple backend groups, each with its own protocol/port/health config
-- Multiple listeners, each with its own protocol/port/backend config
+You can use one Load Balancer and one Network Load Balancer on the free tier.
+- Network Load Balancer will be public, used for http (80), https (443) and kubeapi (6443)
+- Load Balancer will be private, used internally by the cluster nodes to reach the kubeapi
 
 ## Quick notes on Network Security
-- Security Lists apply to all VNICs in the VCN
-- Network Security Groups apply to selected VNICs (...apparently - I can't select which ones my group uses!)
-- The Load Balancer can use Network Security Group
+- Security Lists apply to all VNICs in the VCN. We will use that to allow ssh (22) access from our home IP address
+- Network Security Groups only apply where they are attached (eg: VNICs, instances)
+- All load balaancers can use Network Security Group
 
-There are other always-free resources (databases, object storage etc) but I have not yet used them yet.
+There are other always-free resources (databases, object storage etc) but this project does not use them yet.
 
 # Terraform?
-_For now_ I haven't written the terraform code to create the required infrastructure, but I'll get to that soon
+This project contains two modules:
+- network: deploys VCN, security groups and rules, load balancers etc
+- cluster: deploys instance pools for k3s server(s) and workers
 
-# k0s
-[k0s](https://k0sproject.io/) is a Kubernetes distribution that can be launched using a single binary. However, it also supports highly-available clusters, and is fully CNCF compliant.
+# k3s
+Huh, this project says `k0s`, wtf? Well, I honestly had too many issues with k0s so I dropped it for now.
 
-## Quick notes on k0s and cluster setup
-### Turning off metrics-server and konnectivity-server
-By default, k0s is a minimally opinionated Kubernetes distro that comes with metrics-server, konnectivity, coredns. However, in my particular setup (no "automatic" Cloud Load Balancer, highly-available control plane with no taints) nothing worked properly until I...
-1. Disabled konnectivity-server (it's not needed in this setup)
-2. Disabled metrics-server (didn't work, and timed out requests causing every kubectl action to take forever)
+## Cluster setup
+- 1x server
+- 3x workers
+- Longhorn (CSI)
+- Traefic ingress controller (installed automatically, using Helm)
+- Metrics Server (installed automatically, using kubectl apply)
 
-### eBPF / Cilium / latest shit?
-I really wanted to do this from the start, because I want to use eBPF instead of iptables and kube-proxy. Unfortunately, it's flakey AF right now _in this setup_. I couldn't get Cilium pods to stay up. I don't want to knock Cilium, because this ~is~ _was_ definitely some weird networking quirk of my setup. I'll come back to this!
+## TODO:
+To make it easier to deploy real stuff to the cluster, we still need:
+- cert-manager
+- external-dns
 
-### Ingress
-Ingress allows you to accept traffic into the cluster and direct it to different services based on rules. Ingress itself relies on _some other networking setup_ to let the traffic in. On AWS EKS, it's probably a Load Balancer. But on _this_ cluster, unless you want to install a load balancer controller in your cluster and pay for an additional Load Balancer, you need to do things differently:
-- Ingress will run with hostNetwork=true
-- The port of the nginx pod will be exposed directly on the node it runs on
-- Your Oracle load balancer port 80 listener will sent traffic to a backend group that uses _the port you expose nginx ingress on_
+The biggest issue I have with simply auto-installing these two is that you might want to use HTTPS01 or DNS01 ACME challenges. If you use the latter, you might want to use your own DNS provider. Personally, I use Cloudflare for a bunch of stuff, so that's what I'm using. But there may not be much point in adding all that junk to this project, except maybe in a separate directory. 
 
-# Steps...
-Since I don't have this stuff terraformed yet, here's the list of steps you need to carry out manually.
+# Usage
+## Create an end.auto.tfvars file...
+The contents of this file will be specific to you. Here's what I've got in mine (with fake details of course):
+```
+compartment_ocid = "ocid1.tenancy.oc1..aaaaaaaaffdnionfsfnseifonvosfn32g4i3no6ih9gewenewowntio32nos"
+tenancy_ocid     = "ocid1.tenancy.oc1..aaaaaaaaffdnionfsfnseifonvosfn32g4i3no6ih9gewenewowntio32nos"
+user_ocid        = "ocid1.user.oc1..aaaaaaaabkc6lfmneesonfoinesiofnefiegbesuifbui3br3u69wet9wbt3"
+fingerprint      = "1a:fe:ed:42:ba:5a:2b:91:aa:25:f9:4a:dd:8c:f6:96"
+private_key_path = "/home/raffraffraff/.oci/oci_api_key.pem"
+public_key_path  = "/home/raffraffraff/.ssh/id_ed25519.pub"
+region           = "eu-amsterdam-1"
 
-## DNS
-1. Register a domain. I used Cloudflare because their additional features are great
-2. Replace all occurrences of "example.com" with your domain in `simple-web-app.yaml` and `k0sctl.yaml`
+# Network config
+availability_domain = "qhym:eu-amsterdam-1-AD-1"
 
-## OCI steps...
-1. Create a VCN
-2. Create a Reserved IP address
-3. Create a network security group
-   - Use the reserved IP
-   - Allow all traffic from your home IP: `curl icanhazip.com`
-4. Create 4 VMs
-   - Ampere (ARM) CPU
-   - 6GB memory
-   - 50GB disk
-   - Ubuntu 20.04
-   - Attach the network security group
-5. Back up the iptables rules!
-6. Allow all traffic from your home IP address:
-   - `sudo iptables -I INPUT -p tcp -s 1.2.3.4/32 -j ACCEPT`
-8. Create a standard load balancer:
-   - Attach Network Security Group
-   - Create separate TCP backends for ports: 80, 443, 6443, 9443, 8???
-   - Create separate TCP listeners for each port, pointing to the correct backend
+# Cluster config
+cluster_name     = "mylovelycluster"
+os_image_id      = "ocid1.image.oc1.eu-amsterdam-1.aaaaaaaa72byfaddfn2wkdhhtgb7c7jjh5jfvri63vumfrafo2tvhdsny3pq"
+```
+ 
+## Apply terraform
+There's more to it than this, but basically...
+```
+terraform init
+terraform plan
+terraform apply
+```
 
-NOTES:
-* Good luck creating the VMs! I kept getting an error that indicated that Oracle were out of resources. That's the free tier for you! Just keep retrying those operations (I used the `oci` cli in a script and kept on retrying until I got all 4 machines)
-* I think the free tier is supposed to allow you to create a Network Load Balancer, but I couldn't do this without adding a credit card, hence I used a standard load balancer
+## Copy the kubeconfig from the server
+When you terraform apply finishes, terraform will output a bunch of IP addresses (yeah, these are fake):
+```
+nlb_ip_address = "151.183.24.123"
+servers_ips = [
+  "151.182.123.14",
+]
+workers_ips = [
+  "83.23.175.22",
+  "151.181.208.130",
+  "134.211.73.19",
+]
+```
 
-## Next steps (ssh, kubectl)
-1. Register DNS A records for _your domain_ matching these:
-   - www.example.com - Load balancer (reserved IP)
-   - k8sapi.example.com - Load balancer (reserved IP)
-   - k8s1.example.com - node1's public IP
-   - k8s2.example.com - node2's public IP
-   - k8s3.example.com - node3's public IP
-   - k8s4.example.com - node4's public IP
-2. Add _internal IP addresses_ for all 4 host FQDNs to `/etc/hosts` on _all hosts_
-3. Update `k0sctl.yaml` with your ssh key / node details and run `k0sctl apply --disable-telemetry`
-4. Run `./ingress.sh`
-5. Run `./webapp.sh`
+So you just need to copy the `/etc/rancher/k3s/k3s.yaml` from the server to your machine and update its `server:` address to that of the `nlb_ip_address`. Example:
+```
+scp ubuntu@151.182.123.14:/etc/rancher/k3s/k3s.yaml /tmp/
+sed -i '/server:/ s/127.0.0.1/123.123.123.123/'
+```
 
-Once that's all done, you should have a working website running on www.example.com!
+You can test it right away by running:
+```
+export KUBECONFIG=/tmp/k3s.yaml
+kubectl get nodes
+```
 
+If that worked, then you can generate a new `~/.kube/config` file with this trick:
+```
+export KUBECONFIG=/tmp/k3s.yaml:~/.kube/config
+kubectl config view --flatten
+```
+
+If the output looks good, pipe it to `~/.kube/config`
