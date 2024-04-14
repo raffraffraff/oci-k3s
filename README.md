@@ -87,7 +87,7 @@ workers_ips = [
 So you just need to copy the `/etc/rancher/k3s/k3s.yaml` from the server to your machine and update its `server:` address to that of the `nlb_ip_address`. Example:
 ```
 scp ubuntu@151.182.123.14:/etc/rancher/k3s/k3s.yaml /tmp/
-sed -i '/server:/ s/127.0.0.1/123.123.123.123/'
+sed -i '/server:/ s/127.0.0.1/123.123.123.123/' /tmp/k3s.yaml
 ```
 
 You can test it right away by running:
