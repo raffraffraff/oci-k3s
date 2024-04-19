@@ -1,3 +1,7 @@
+data "http" "ip" {
+  url = "https://ifconfig.me/ip"
+}
+
 module "network" {
   source                       = "./modules/network"
   region                       = var.region

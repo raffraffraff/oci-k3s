@@ -18,6 +18,3 @@ variable "k3s_server_pool_size" {
 variable "k3s_worker_pool_size" {
   default = 2
 }
-
-# Disabled, in favour of data lookup
-#variable "my_public_ip_cidr" {}
