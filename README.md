@@ -139,6 +139,7 @@ Then export your GITHUB_TOKEN and bootstrap your cluster!
 ```
 $ export GITHUB_TOKEN=github_pat_123456ABCDEF_0987654321POIUYTRREWETCETCETC`
 $ flux bootstrap github --owner=raffraffraff --repository=fluxcd-example --branch=main`
+```
 
 You should see output like this:
 ```
