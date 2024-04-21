@@ -135,9 +135,14 @@ First, make sure your KUBECONFIG is pointing to the right cluster:
 $ kubectl cluster-info
 ```
 
-Then export your GITHUB_TOKEN and bootstrap your cluster!
+Then export your GITHUB_TOKEN:
 ```
 $ export GITHUB_TOKEN=github_pat_123456ABCDEF_0987654321POIUYTRREWETCETCETC`
+```
+
+Now, we can check that we have everything we need, and finally bootstrap the cluster:
+```
+$ flux check --pre
 $ flux bootstrap github --owner=raffraffraff --repository=fluxcd-example --branch=main`
 ```
 
@@ -184,5 +189,13 @@ flux-system/
 └── kustomization.yaml
 ```
 
-From here, you can add some kubernetes deployments using Helm or Kustomize.
-TO BE CONTINUED...
+The kustomization.yaml just contains the instruction to load both gotk files:
+```
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- gotk-components.yaml
+- gotk-sync.yaml
+```
+
+From here, you can add some kubernetes deployments using Helm or Kustomize. This can be done entirely in YAMl and pushed to your git project, or you can use the FluxCD CLI. But this is all out of scope of this small project. You may already know how to use FluxCD, but if you don't, there are plenty of useful resources including their own Getting Started page https://fluxcd.io/flux/get-started/.
