@@ -111,3 +111,77 @@ kubectl config view --flatten
 ```
 
 If the output looks good, pipe it to `~/.kube/config`
+
+# Next Steps: GitOps cluster management
+The best way to continue in a vaguely reproducible way is to use GitOps, and the most popular options right now are FluxCD and ArgoCD. I'm going with FluxCD because I know it better, and it runs with fewer resources.
+
+## Create a Git repo and an authorization token for FluxCD to access it
+I'm using github, so if you're using some other source control, follow its instructions
+
+* Create a Github repo for flux (I used `fluxcd-example`)
+* Create a Github token
+  * Use a fine-grained token
+  * Only grant it access to the FluxCD repo
+
+## Install FluxCD
+```
+$ curl -s https://fluxcd.io/install.sh | sudo bash
+$ flux completion bash | sudo tee /etc/bash_completion.d/flux
+```
+
+## Bootstrap FluxCD in your cluster
+First, make sure your KUBECONFIG is pointing to the right cluster:
+```
+$ kubectl cluster-info
+```
+
+Then export your GITHUB_TOKEN and bootstrap your cluster!
+```
+$ export GITHUB_TOKEN=github_pat_123456ABCDEF_0987654321POIUYTRREWETCETCETC`
+$ flux bootstrap github --owner=raffraffraff --repository=fluxcd-example --branch=main`
+
+You should see output like this:
+```
+► cloning branch "main" from Git repository "https://github.com/raffraffraff/fluxcd-example.git"
+✔ cloned repository
+► generating component manifests
+✔ generated component manifests
+✔ committed sync manifests to "main" ("188455d0c3f0882ff0bd24adcb61733294933ff6")
+► pushing component manifests to "https://github.com/raffraffraff/fluxcd-example.git"
+► installing components in "flux-system" namespace
+✔ installed components
+✔ reconciled components
+► determining if source secret "flux-system/flux-system" exists
+► generating source secret
+✔ public key: ecdsa-sha2-nistp384 ABCDEFGHIJKLIMNO1234567890
+✔ configured deploy key "flux-system-main-flux-system" for "https://github.com/raffraffraff/fluxcd-example"
+► applying source secret "flux-system/flux-system"
+✔ reconciled source secret
+► generating sync manifests
+✔ generated sync manifests
+✔ committed sync manifests to "main" ("ca709547287d31c4d72c71a9fdf82667d64bfb4e")
+► pushing sync manifests to "https://github.com/raffraffraff/fluxcd-example.git"
+► applying sync manifests
+✔ reconciled sync configuration
+◎ waiting for Kustomization "flux-system/flux-system" to be reconciled
+✔ Kustomization reconciled successfully
+► confirming components are healthy
+✔ helm-controller: deployment ready
+✔ kustomize-controller: deployment ready
+✔ notification-controller: deployment ready
+✔ source-controller: deployment ready
+✔ all components are healthy
+```
+
+## Deploy something using GitOps!
+After I bootstrapped FluxCD in my cluster, it automatically pushed a bunch of changes back into my Github project, https://github.com/raffraffraff/fluxcd-example. This basically consists of a flux-system directory:
+
+```
+flux-system/
+├── gotk-components.yaml
+├── gotk-sync.yaml
+└── kustomization.yaml
+```
+
+From here, you can add some kubernetes deployments using Helm or Kustomize.
+TO BE CONTINUED...
