@@ -1,5 +1,5 @@
 # Basic NGINX server with ingress
-This is probably the simplest way to demonstrate how you can get an extremely simple webpage hosted on your cluster. If you run `deploy.sh` in this directory it will deploy the following resources:
+This is probably the simplest way to demonstrate how you can run a webserver on the cluster. If you run `deploy.sh` in this directory it will deploy the following resources:
 - Deployment 'nginx'
   - Creates Pod 'nginx'
     - Runs the container nginx:latest
@@ -14,7 +14,7 @@ This is probably the simplest way to demonstrate how you can get an extremely si
     - Backend service: nginx
     - Backend port: 80
 
-Now, the host 'example.com' does not exist, but you can test it easily. Grab the public IP address of your NLB (which you'll find in the `terraform output` results for the root module) and try this curl command:
+Since 'example.com' does not exist, you need to give curl your NLB's public IP address (which you'll find in `terraform output`):
 
 ```
 curl http://example.com --resolve 'example.com:80:151.183.24.123'
