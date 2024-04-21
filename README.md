@@ -180,7 +180,7 @@ You should see output like this:
 ```
 
 ## Deploy something using GitOps!
-After I bootstrapped FluxCD in my cluster, it automatically pushed a bunch of changes back into my Github project, https://github.com/raffraffraff/fluxcd-example. This basically consists of a flux-system directory:
+After I bootstrapped FluxCD in my cluster, it automatically pushed a bunch of changes back into my 'fluxcd-example' Github repo. This basically consisted of a `flux-system` directory:
 
 ```
 flux-system/
@@ -189,7 +189,7 @@ flux-system/
 └── kustomization.yaml
 ```
 
-The kustomization.yaml just contains the instruction to load both gotk files:
+The kustomization.yaml just contained a single Kustomization resource that referred to the two gotk files:
 ```
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
