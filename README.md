@@ -241,14 +241,14 @@ spec:
 # Redundancy / Availability / Backup / Restore
 This cluster has a single server. If we lose that, it's game over. The official k3s [documentation](https://docs.k3s.io/datastore/backup-restore) makes it sound simple - back up the server token and db directory, and restore them afterwards! But it's not quite that simple. Here's a more fool-proof [backup/restore process](https://github.com/gilesknap/k3s-minecraft/blob/main/useful/deployed/backup-sqlite/README.md) which we can summarize as follows...
 
-Backing up the server:
+## Backing up the server:
 * `systemctl stop k3s`
 * Back up `/var/lib/rancher/k3s/server` directory
 * Back up `/etc/systemd/system/k3s.service`
 * Back up `/etc/rancher/k3s/config.yaml`
 * `systemctl start k3s`
 
-Restoring the server:
+## Restoring the server:
 * `systemctl stop k3s`
 * `rm -rf /var/lib/rancher/k3s/server`
 * Restore `/var/lib/rancher/k3s/server` directory
@@ -256,8 +256,14 @@ Restoring the server:
 * Restore `/etc/rancher/k3s/config.yaml`
 * `systemctl start k3s`
 
-That could probably be scripted, but we would have to modify the server template to detect a remote k3s server backup and restore it as part of the k3s installation process. For the worker nodes, it's actually pretty simple. I tested this by selecting a random node (in my case, called "inst-canri-k3s-workers"") ran the following:
+That could probably be scripted, but we would have to modify the server template to detect a remote k3s server backup and restore it as part of the k3s installation process. 
+
+## Worker node redundancy
+The workers are already redundant and will recover automatically in this setup. I tested this by selecting a random node (in my case, called "inst-canri-k3s-workers"") ran the following:
 - `kubectl drain inst-canri-k3s-workers --delete-emptydir-data --ignore-daemonsets`
 - `kubectl delete nodes inst-canri-k3s-workers`
 
-I then deleted the OCI instance and waited for a new one to appear. After a while, OCI provisioned an instance, and a little while later it appeared in my cluster. So this cluster is _moderately_ HA.
+I then terminated the OCI instance and waited for a few minutes. A new OCI instance was provisioned and a short while later, it appeared in the k3s cluster. Friggin' yay.
+
+## Data redundancy? Yes!
+If you use persistent volumes in your deployments, then Longhorn handles these. Longhorn gives you distributed persistent storage using the raw storage capacity of your servers. Beware that while its performance is OK for reads, it's not good for heavy writes. But hey, this is a totally free cluster. If you want more oomph, install Oracle's CSI and pay for provisioned storage instead.
