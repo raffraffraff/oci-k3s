@@ -238,17 +238,18 @@ spec:
     path: ./apps/production
 ```
 
-# Redundancy / Availability / Backup / Restore
-This cluster has a single server. If we lose that, it's game over. The official k3s [documentation](https://docs.k3s.io/datastore/backup-restore) makes it sound simple - back up the server token and db directory, and restore them afterwards! But it's not quite that simple. Here's a more fool-proof [backup/restore process](https://github.com/gilesknap/k3s-minecraft/blob/main/useful/deployed/backup-sqlite/README.md) which we can summarize as follows...
+# Availability
+## Server Backup / Restore
+This cluster has a single server, and if you lose that, it's game over. So it makes sense to back it up, and restore to a new server in the event of a failure. The official k3s [documentation](https://docs.k3s.io/datastore/backup-restore) makes it sound like a simple affair (back up the server token and db directory, and restore them afterwards) but it's not. A more detailed [backup/restore process](https://github.com/gilesknap/k3s-minecraft/blob/main/useful/deployed/backup-sqlite/README.md) can be summarize as follows...
 
-## Backing up the server:
+### Backing up the server:
 * `systemctl stop k3s`
 * Back up `/var/lib/rancher/k3s/server` directory
 * Back up `/etc/systemd/system/k3s.service`
 * Back up `/etc/rancher/k3s/config.yaml`
 * `systemctl start k3s`
 
-## Restoring the server:
+### Restoring the server:
 * `systemctl stop k3s`
 * `rm -rf /var/lib/rancher/k3s/server`
 * Restore `/var/lib/rancher/k3s/server` directory
