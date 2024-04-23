@@ -189,7 +189,7 @@ After I bootstrapped FluxCD in my cluster, it automatically pushed a bunch of ch
 
 ```
 clusters
-└── internal-euw1
+└── mylovelycluster
    └── flux-system
        ├── gotk-components.yaml
        ├── gotk-sync.yaml
@@ -209,7 +209,7 @@ At this point you need to decide on a directory structure. This example deploys 
 
 ```
 ├── clusters
-│   └── internal-euw1
+│   └── mylovelycluster
 │       ├── staging      <-- a simple kustomization points to apps/staging
 │       ├── production   <-- a simple kustomization points to apps/staging
 │       └── flux-system
@@ -222,12 +222,12 @@ At this point you need to decide on a directory structure. This example deploys 
     └── production  <-- loads configs from 'base' and then applies patches to them
 ```
 
-FluxCD recursively loads all kustomization files under the cluster. From these you apply resources from other directories, eg: `HelmRelease`, `Kustomization` etc. You can also add external git repositories using `kind: GitRepository`, and apply configurations from it with a kustomization that contains:
+FluxCD recursively loads all kustomization files under `mylovelycluster`, so you can create directories for your environments and use these to apply resources. A this point you can define all 'base' workloads and their overrides (or _patches_) from the `apps/${environment}` directories. Or you can put your app configs into another git repo entirely, and refer use this in your `clusters/mylovelycluster/staging/kustomize.yaml`
 ```
 spec:
   interval: 10m0s
   sourceRef:
     kind: GitRepository
-    name: my-other-repo
+    name: some-other-git-repo
     path: ./apps/production
 ```
