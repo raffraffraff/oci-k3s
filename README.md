@@ -15,7 +15,7 @@ DISCLAIMERS:
 
 1. The Ampere A1 instance shape used in this project is eligible for the free tier. But I found it extremely difficult to deploy this project, with OCI reporting that these instances are at full capacity in my region. I also found it impossible to deploy an instance pool with more than 2 instances in it (which I wanted for my workers). I decided to upgrade my account (which requires a credit card). And just like that, I could reliably deploy all 4 instances, and the worker instance pool had no problem with 3x instances. So this project basically requires an upgraded OCI account with a credit card on it. (But it still shouldn't cost you anything)
 
-2. This isn't a production grade setup because it deploys a single k3s server. If you lose that node, the cluster is dead. I took this approach because I'm not going to run anything critical on it. _That said_, it should be pretty solid - I have had 2 servers on OCI running for over 400 days with zero downtime, so that's good enough for me! You can backup/restore the cluster state (see this: https://docs.k3s.io/datastore/backup-restore)
+2. This isn't a production grade setup because it deploys a single k3s server. If you lose that node, the cluster is dead. See the availability section at the end of this readme for backup/restore instructions.
 
 # Before you begin
 ## Pre-requisites
