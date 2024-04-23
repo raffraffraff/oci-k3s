@@ -9,7 +9,7 @@ inst-ign06-k3s-workers   35m          3%     1133Mi          19%
 inst-nsvzh-k3s-servers   122m         12%    2232Mi          37%
 ```
 
-This leaves around ~15gb of memory and most of the 3x ARM CPUs for you to play with. Not bad for free! 
+Even if you don't deploy any workloads to the server, this leaves ~15gb of memory and 95%+ of 3x ARM CPUs. Not bad for an always-free cluster!
 
 DISCLAIMERS:
 
