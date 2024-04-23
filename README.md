@@ -37,8 +37,8 @@ This project contains two modules:
 - network: deploys VCN, security groups and rules, load balancers etc
 - cluster: deploys instance pools for k3s server and workers
 
-Once Kubernetes is running, it also deploys into it:
-- Longhorn (CSI)
+Once Kubernetes is running, the server bootstrap script deploys:
+- Longhorn (CSI, provides persistent volumes using instance local storage)
 - Traefic ingress controller (installed automatically, using Helm)
 - Metrics Server (installed automatically, using kubectl apply)
 
