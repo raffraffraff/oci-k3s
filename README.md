@@ -15,7 +15,7 @@ DISCLAIMERS:
 
 1. The Ampere A1 instance shape used in this project is eligible for the free tier. But I found it extremely difficult to deploy this project, with OCI reporting that these instances are at full capacity in my region. I also found it impossible to deploy an instance pool with more than 2 instances in it (which I wanted for my workers). I decided to upgrade my account (which requires a credit card). And just like that, I could reliably deploy all 4 instances, and the worker instance pool had no problem with 3x instances. So this project basically requires an upgraded OCI account with a credit card on it. (But it still shouldn't cost you anything)
 
-2. This is a brittle setup, because it deploys a single k3s server and 3x workers. I took this approach because I'm not going to run anything critical on it. _That said_, I have had 2 servers on OCI running for over 400 days with zero downtime, so that's good enough for me! I may tinker with this serup later, and perhaps try 3x servers and 1x dedicated worker, with workloads also runing on the servers. If you happen to use this project and decide to make that change yourself, please send me a pull request if it works!
+2. This isn't a production grade setup because it deploys a single k3s server. If you lose that node, the cluster is dead. I took this approach because I'm not going to run anything critical on it. _That said_, it should be pretty solid - I have had 2 servers on OCI running for over 400 days with zero downtime, so that's good enough for me! You can backup/restore the cluster state (see this: https://docs.k3s.io/datastore/backup-restore)
 
 # Before you begin
 ## Pre-requisites
@@ -237,3 +237,27 @@ spec:
     name: some-other-git-repo
     path: ./apps/production
 ```
+
+# Redundancy / Availability / Backup / Restore
+This cluster has a single server. If we lose that, it's game over. The official k3s [documentation](https://docs.k3s.io/datastore/backup-restore) makes it sound simple - back up the server token and db directory, and restore them afterwards! But it's not quite that simple. Here's a more fool-proof [backup/restore process](https://github.com/gilesknap/k3s-minecraft/blob/main/useful/deployed/backup-sqlite/README.md) which we can summarize as follows...
+
+Backing up the server:
+* `systemctl stop k3s`
+* Back up `/var/lib/rancher/k3s/server` directory
+* Back up `/etc/systemd/system/k3s.service`
+* Back up `/etc/rancher/k3s/config.yaml`
+* `systemctl start k3s`
+
+Restoring the server:
+* `systemctl stop k3s`
+* `rm -rf /var/lib/rancher/k3s/server`
+* Restore `/var/lib/rancher/k3s/server` directory
+* Restore `/etc/systemd/system/k3s.service`
+* Restore `/etc/rancher/k3s/config.yaml`
+* `systemctl start k3s`
+
+That could probably be scripted, but we would have to modify the server template to detect a remote k3s server backup and restore it as part of the k3s installation process. For the worker nodes, it's actually pretty simple. I tested this by selecting a random node (in my case, called "inst-canri-k3s-workers"") ran the following:
+- `kubectl drain inst-canri-k3s-workers --delete-emptydir-data --ignore-daemonsets`
+- `kubectl delete nodes inst-canri-k3s-workers`
+
+I then deleted the OCI instance and waited for a new one to appear. After a while, OCI provisioned an instance, and a little while later it appeared in my cluster. So this cluster is _moderately_ HA.
