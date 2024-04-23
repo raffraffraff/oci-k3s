@@ -24,7 +24,6 @@ DISCLAIMERS:
    - [terraform](https://www.terraform.io/downloads)
    - [kubectl](https://kubernetes.io/docs/tasks/tools)
    - [helm](https://helm.sh/docs/intro/install)
-   - [jq](https://stedolan.github.io/jq/download)
    - [oci-cli](https://github.com/oracle/oci-cli/releases)
 
 ## Network Security
@@ -75,11 +74,11 @@ There's more to it than this, but basically...
 ```
 terraform init
 terraform plan
-terraform app
+terraform apply
 ```
 
 ## Copy the kubeconfig from the server
-When you terraform apply finishes, terraform will output a bunch of IP addresses (yeah, these are fake):
+When you terraform apply finishes, terraform will output a bunch of IP addresses (yeah, these are also fake):
 ```
 nlb_ip_address = "151.183.24.123"
 servers_ips = [
@@ -92,37 +91,36 @@ workers_ips = [
 ]
 ```
 
-So you just need to copy the `/etc/rancher/k3s/k3s.yaml` from the server to your machine and update its `server:` address to that of the `nlb_ip_address`. Example:
+You should copy the `/etc/rancher/k3s/k3s.yaml` from the server to your machine and update its `server:` address to that of the `nlb_ip_address`. Example:
 ```
 scp ubuntu@151.182.123.14:/etc/rancher/k3s/k3s.yaml /tmp/
-sed -i '/server:/ s/127.0.0.1/123.123.123.123/' /tmp/k3s.yaml
+sed -i '/server:/ s/127.0.0.1/151.183.24.123/' /tmp/k3s.yaml
 ```
 
-You can test it right away by running:
+You will probably want to rename the server, user and context to suit you, but otherwise you can test this right away by running:
 ```
 export KUBECONFIG=/tmp/k3s.yaml
 kubectl get nodes
 ```
 
-If that worked, then you can generate a new `~/.kube/config` file with this trick:
+If that worked, then you can generate a new `~/.kube/config` file that combines this with your existing kube configs:
 ```
 export KUBECONFIG=/tmp/k3s.yaml:~/.kube/config
 kubectl config view --flatten
 ```
 
-If the output looks good, pipe it to `~/.kube/config`
+If the output looks good, pipe it to `~/.kube/config`. 
 
-# Next Steps: GitOps cluster management
-The best way to continue in a vaguely reproducible way is to use GitOps, and the most popular options right now are FluxCD and ArgoCD. I'm going with FluxCD because I know it better, and it runs with fewer resources.
+# Next Steps: GitOps
+The most popular options right now are FluxCD and ArgoCD. I'm going with FluxCD because I know it better, and it consumes fewer resources.
 
-## Create a Git repo and an authorization token for FluxCD to access it
-I'm using github, so if you're using some other source control, follow its instructions
+## Create a Git repo and a temporary fine-grained authorization token
+I'm using github, so if you're using some other source control, modify these instructions.
 
 * Create a Github repo for flux (I used `fluxcd-example`)
-* Create a Github token
-  * Use a fine-grained token
-  * Only grant it access to the FluxCD repo
-  * Permissions required under the repository are:
+* Create a Github fine-grained personal access token
+  * Only grant it access to the `fluxcd-example` repo
+  * Grant the following permissions, under Repository:
     * Metadata
     * Administration > read & write
     * Content > read & write
@@ -139,7 +137,7 @@ First, make sure your KUBECONFIG is pointing to the right cluster:
 $ kubectl cluster-info
 ```
 
-Then use your fine-grained access token to set the variable GITHUB_TOKEN:
+Then set the environment variable GITHUB_TOKEN to your fine-grained access token:
 ```
 $ export GITHUB_TOKEN=github_pat_123456ABCDEF_0987654321POIUYTRREWETCETCETC`
 ```
@@ -155,7 +153,7 @@ $ flux bootstrap \
     --path clusters/mylovelycluster \
 ```
 
-You should see output like this:
+The output should look like this:
 ```
 ► cloning branch "main" from Git repository "https://github.com/raffraffraff/fluxcd-example.git"
 ✔ cloned repository
@@ -188,11 +186,9 @@ You should see output like this:
 ✔ all components are healthy
 ```
 
-NOTE: FluxCD generates a read-only deploy key in your git project, and uses that from this point on. So you can now delete the fine-grained personal access token if you wish!
+NOTE: FluxCD generates a read-only deploy key in your git project, and uses that from this point on, so you can delete the fine-grained personal access token if you wish.
 
-## Deploy something using GitOps!
-During the bootstrap process, FluxCD pushed the cluster config back to my 'fluxcd-example' Github repo:
-
+During the bootstrap process, FluxCD pushes the cluster config back to the 'fluxcd-example' Github repo:
 ```
 clusters
 └── mylovelycluster
@@ -202,7 +198,7 @@ clusters
        └── kustomization.yaml
 ```
 
-The kustomization.yaml just containes a single Kustomization resource that refers to the two gotk files:
+The `kustomization.yaml` just containes a single Kustomization resource that refers to the two gotk files:
 ```
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -211,7 +207,8 @@ resources:
 - gotk-sync.yaml
 ```
 
-At this point you should decide on a directory structure for your FluxCD repo. This is a typical monorepo deployment with separate 'staging' and 'production' environments:
+## Deploy something using GitOps!
+At this point you should decide on a directory structure for your FluxCD repo. This example shows a typical monorepo deployment with separate 'staging' and 'production' environments:
 
 ```
 ├── clusters
