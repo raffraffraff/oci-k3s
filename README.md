@@ -122,6 +122,10 @@ I'm using github, so if you're using some other source control, follow its instr
 * Create a Github token
   * Use a fine-grained token
   * Only grant it access to the FluxCD repo
+  * Permissions required under the repository are:
+    * Metadata
+    * Administration > read & write
+    * Content > read & write
 
 ## Install FluxCD
 ```
@@ -135,7 +139,7 @@ First, make sure your KUBECONFIG is pointing to the right cluster:
 $ kubectl cluster-info
 ```
 
-Then export your GITHUB_TOKEN:
+Then use your fine-grained access token to set the variable GITHUB_TOKEN:
 ```
 $ export GITHUB_TOKEN=github_pat_123456ABCDEF_0987654321POIUYTRREWETCETCETC`
 ```
@@ -184,8 +188,10 @@ You should see output like this:
 ✔ all components are healthy
 ```
 
+NOTE: FluxCD generates a read-only deploy key in your git project, and uses that from this point on. So you can now delete the fine-grained personal access token if you wish!
+
 ## Deploy something using GitOps!
-After I bootstrapped FluxCD in my cluster, it automatically pushed a bunch of changes back into my 'fluxcd-example' Github repo. This basically consisted of a `flux-system` directory under clusters:
+During the bootstrap process, FluxCD pushed the cluster config back to my 'fluxcd-example' Github repo:
 
 ```
 clusters
@@ -196,7 +202,7 @@ clusters
        └── kustomization.yaml
 ```
 
-The kustomization.yaml just containes a single Kustomization resource that referred to the two gotk files:
+The kustomization.yaml just containes a single Kustomization resource that refers to the two gotk files:
 ```
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -205,21 +211,21 @@ resources:
 - gotk-sync.yaml
 ```
 
-At this point you need to decide on a directory structure. This example deploys applications into separate 'staging' and 'production' environments:
+At this point you should decide on a directory structure for your FluxCD repo. This is a typical monorepo deployment with separate 'staging' and 'production' environments:
 
 ```
 ├── clusters
 │   └── mylovelycluster
-│       ├── staging      <-- a simple kustomization points to apps/staging
-│       ├── production   <-- a simple kustomization points to apps/staging
+│       ├── staging        <-- a simple kustomization points to apps/staging
+│       ├── production     <-- a simple kustomization points to apps/staging
 │       └── flux-system
 │           ├── gotk-components.yaml
 │           ├── gotk-sync.yaml
 │           └── kustomization.yaml
 └── apps
-    ├── base        <-- contains resources like HelmRelease, Kustomize
-    ├── staging     <-- loads configs from 'base' and then applies patches to them
-    └── production  <-- loads configs from 'base' and then applies patches to them
+    ├── base               <-- contains resources like HelmRelease, Kustomize, etc
+    ├── staging            <-- loads configs from 'base' and then applies staging patches to them
+    └── production         <-- loads configs from 'base' and then applies production patches to them
 ```
 
 FluxCD recursively loads all kustomization files under `mylovelycluster`, so you can create directories for your environments and use these to apply resources. A this point you can define all 'base' workloads and their overrides (or _patches_) from the `apps/${environment}` directories. Or you can put your app configs into another git repo entirely, and refer use this in your `clusters/mylovelycluster/staging/kustomize.yaml`
