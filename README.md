@@ -143,7 +143,12 @@ $ export GITHUB_TOKEN=github_pat_123456ABCDEF_0987654321POIUYTRREWETCETCETC`
 Now, we can check that we have everything we need, and finally bootstrap the cluster:
 ```
 $ flux check --pre
-$ flux bootstrap github --owner=raffraffraff --repository=fluxcd-example --branch=main`
+$ flux bootstrap \
+    github \
+    --owner=raffraffraff \
+    --repository=fluxcd-example \
+    --branch=main \
+    --path clusters/mylovelycluster \
 ```
 
 You should see output like this:
@@ -180,16 +185,18 @@ You should see output like this:
 ```
 
 ## Deploy something using GitOps!
-After I bootstrapped FluxCD in my cluster, it automatically pushed a bunch of changes back into my 'fluxcd-example' Github repo. This basically consisted of a `flux-system` directory:
+After I bootstrapped FluxCD in my cluster, it automatically pushed a bunch of changes back into my 'fluxcd-example' Github repo. This basically consisted of a `flux-system` directory under clusters:
 
 ```
-flux-system/
-├── gotk-components.yaml
-├── gotk-sync.yaml
-└── kustomization.yaml
+clusters
+└── internal-euw1
+   └── flux-system
+       ├── gotk-components.yaml
+       ├── gotk-sync.yaml
+       └── kustomization.yaml
 ```
 
-The kustomization.yaml just contained a single Kustomization resource that referred to the two gotk files:
+The kustomization.yaml just containes a single Kustomization resource that referred to the two gotk files:
 ```
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -198,4 +205,29 @@ resources:
 - gotk-sync.yaml
 ```
 
-From here, you can add some kubernetes deployments using Helm or Kustomize. This can be done entirely in YAMl and pushed to your git project, or you can use the FluxCD CLI. But this is all out of scope of this small project. You may already know how to use FluxCD, but if you don't, there are plenty of useful resources including their own Getting Started page https://fluxcd.io/flux/get-started/.
+At this point you need to decide on a directory structure. This example deploys applications into separate 'staging' and 'production' environments:
+
+```
+├── clusters
+│   └── internal-euw1
+│       ├── staging      <-- a simple kustomization points to apps/staging
+│       ├── production   <-- a simple kustomization points to apps/staging
+│       └── flux-system
+│           ├── gotk-components.yaml
+│           ├── gotk-sync.yaml
+│           └── kustomization.yaml
+└── apps
+    ├── base        <-- contains resources like HelmRelease, Kustomize
+    ├── staging     <-- loads configs from 'base' and then applies patches to them
+    └── production  <-- loads configs from 'base' and then applies patches to them
+```
+
+FluxCD recursively loads all kustomization files under the cluster. From these you apply resources from other directories, eg: `HelmRelease`, `Kustomization` etc. You can also add external git repositories using `kind: GitRepository`, and apply configurations from it with a kustomization that contains:
+```
+spec:
+  interval: 10m0s
+  sourceRef:
+    kind: GitRepository
+    name: my-other-repo
+    path: ./apps/production
+```
