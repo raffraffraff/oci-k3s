@@ -213,26 +213,26 @@ At this point you should decide on a directory structure for your FluxCD repo. T
 ```
 ├── clusters
 │   └── mylovelycluster
-│       ├── staging        <-- a simple kustomization points to apps/staging
-│       ├── production     <-- a simple kustomization points to apps/staging
 │       └── flux-system
 │           ├── gotk-components.yaml
 │           ├── gotk-sync.yaml
+│           ├── staging-apps.yaml     <-- contains a kustomization of type: GitRepository, which loads your apps/staging/kustomize.yaml
 │           └── kustomization.yaml
 └── apps
-    ├── base               <-- contains resources like HelmRelease, Kustomize, etc
-    ├── staging            <-- loads configs from 'base' and then applies staging patches to them
-    └── production         <-- loads configs from 'base' and then applies production patches to them
+    ├── base                     <-- contains resources like HelmRelease, Kustomize, etc
+    └── staging            
+        ├── kustomization.yaml   <-- applies resources from '../base', and patches the from overrides.yaml
+        └── overrides.yaml
 ```
 
-FluxCD recursively loads all kustomization files under `mylovelycluster`, so you can create directories for your environments and use these to apply resources. A this point you can define all 'base' workloads and their overrides (or _patches_) from the `apps/${environment}` directories. Or you can put your app configs into another git repo entirely, and refer use this in your `clusters/mylovelycluster/staging/kustomize.yaml`
+You could also your app configs into another git repo entirely, and refer use this in your `clusters/mylovelycluster/staging/kustomize.yaml`
 ```
 spec:
   interval: 10m0s
   sourceRef:
     kind: GitRepository
     name: some-other-git-repo
-    path: ./apps/production
+    path: ./apps/staging
 ```
 
 # Availability
