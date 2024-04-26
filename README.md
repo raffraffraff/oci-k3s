@@ -25,6 +25,9 @@ DISCLAIMERS:
    - [kubectl](https://kubernetes.io/docs/tasks/tools)
    - [helm](https://helm.sh/docs/intro/install)
    - [oci-cli](https://github.com/oracle/oci-cli/releases)
+   - [kubeseal](https://github.com/bitnami-labs/sealed-secrets) (optional)
+   - [flux](https://fluxcd.io/flux/installation/) (optional)
+   - [jq](https://jqlang.github.io/jq/download/) (optional)
 
 ## Network Security
 Some facts about OCI:
@@ -198,7 +201,7 @@ clusters
        └── kustomization.yaml
 ```
 
-The `kustomization.yaml` just containes a single Kustomization resource that refers to the two gotk files:
+You don't touch these. The `kustomization.yaml` just containes a single Kustomization resource that refers to the two gotk files:
 ```
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
@@ -207,32 +210,30 @@ resources:
 - gotk-sync.yaml
 ```
 
-## Deploy something using GitOps!
-At this point you should decide on a directory structure for your FluxCD repo. This example shows a typical monorepo deployment with separate 'staging' and 'production' environments:
+## Deploy something useful, with GitOps!
+The most obvious next steps for me were to deploy:
+- Bitnami sealed-secrets, which provide a safe way to check encrypted secrets into my git repo
+- Cert Manager, which automatically fetches certs from LetsEncrypt when I deploy a new ingress
+- External DNS, which automatically registers a new hostname on my domain when I deploy a new ingress
 
 ```
 ├── clusters
 │   └── mylovelycluster
-│       └── flux-system
-│           ├── gotk-components.yaml
-│           ├── gotk-sync.yaml
-│           ├── staging-apps.yaml     <-- contains a kustomization of type: GitRepository, which loads your apps/staging/kustomize.yaml
-│           └── kustomization.yaml
-└── apps
-    ├── base                     <-- contains resources like HelmRelease, Kustomize, etc
-    └── staging            
-        ├── kustomization.yaml   <-- applies resources from '../base', and patches the from overrides.yaml
-        └── overrides.yaml
-```
-
-You could also your app configs into another git repo entirely, and refer use this in your `clusters/mylovelycluster/staging/kustomize.yaml`
-```
-spec:
-  interval: 10m0s
-  sourceRef:
-    kind: GitRepository
-    name: some-other-git-repo
-    path: ./apps/staging
+│       ├── flux-system                 <-- don't touch any of the files in here!
+│       │   ├── gotk-components.yaml
+│       │   ├── gotk-sync.yaml    
+│       │   └── kustomization.yaml
+│       └── infrastructure.yaml         <-- I added this to deploy my infrastructure stuff
+└── infrastructure
+    ├── configs
+    │   ├── cert-issuers.yaml
+    │   ├── external-dns.yaml
+    │   └── kustomization.yaml          <-- deploys cert-issuers.yaml, which configures cert-manager
+    └── controllers
+        ├── cert-manager.yaml
+        ├── external-dns.yaml
+        ├── sealed-secrets.yaml
+        └── kustomization.yaml          <-- deploys cert-manager.yaml and sealed-secrets.yaml
 ```
 
 # Availability
