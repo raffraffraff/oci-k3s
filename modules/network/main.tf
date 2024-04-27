@@ -3,11 +3,6 @@ resource "oci_core_vcn" "default_oci_core_vcn" {
   compartment_id = var.compartment_ocid
   display_name   = "Default OCI core vcn"
   dns_label      = var.oci_core_vcn_dns_label
-  freeform_tags = {
-    "provisioner"           = "terraform"
-    "environment"           = var.environment
-    "${var.unique_tag_key}" = "${var.unique_tag_value}"
-  }
 }
 
 resource "oci_core_subnet" "default_oci_core_subnet10" {
@@ -18,11 +13,6 @@ resource "oci_core_subnet" "default_oci_core_subnet10" {
   route_table_id    = oci_core_vcn.default_oci_core_vcn.default_route_table_id
   vcn_id            = oci_core_vcn.default_oci_core_vcn.id
   security_list_ids = [oci_core_default_security_list.default_security_list.id]
-  freeform_tags = {
-    "provisioner"           = "terraform"
-    "environment"           = var.environment
-    "${var.unique_tag_key}" = "${var.unique_tag_value}"
-  }
 }
 
 resource "oci_core_subnet" "oci_core_subnet11" {
@@ -33,11 +23,6 @@ resource "oci_core_subnet" "oci_core_subnet11" {
   route_table_id    = oci_core_vcn.default_oci_core_vcn.default_route_table_id
   vcn_id            = oci_core_vcn.default_oci_core_vcn.id
   security_list_ids = [oci_core_default_security_list.default_security_list.id]
-  freeform_tags = {
-    "provisioner"           = "terraform"
-    "environment"           = var.environment
-    "${var.unique_tag_key}" = "${var.unique_tag_value}"
-  }
 }
 
 resource "oci_core_internet_gateway" "default_oci_core_internet_gateway" {
@@ -45,11 +30,6 @@ resource "oci_core_internet_gateway" "default_oci_core_internet_gateway" {
   display_name   = "Internet Gateway Default OCI core vcn"
   enabled        = "true"
   vcn_id         = oci_core_vcn.default_oci_core_vcn.id
-  freeform_tags = {
-    "provisioner"           = "terraform"
-    "environment"           = var.environment
-    "${var.unique_tag_key}" = "${var.unique_tag_value}"
-  }
 }
 
 resource "oci_core_default_route_table" "default_oci_core_default_route_table" {
@@ -98,11 +78,6 @@ resource "oci_core_default_security_list" "default_security_list" {
     description = "Allow all from vcn subnet"
   }
 
-  freeform_tags = {
-    "provisioner"           = "terraform"
-    "environment"           = var.environment
-    "${var.unique_tag_key}" = "${var.unique_tag_value}"
-  }
 }
 
 resource "oci_identity_dynamic_group" "compute_dynamic_group" {

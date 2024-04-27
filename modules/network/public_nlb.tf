@@ -1,16 +1,11 @@
 resource "oci_network_load_balancer_network_load_balancer" "k3s_public_lb" {
   compartment_id             = var.compartment_ocid
-  display_name               = var.public_load_balancer_name
+  display_name               = "K3S Public Network Load Balancer"
   subnet_id                  = oci_core_subnet.oci_core_subnet11.id
   network_security_group_ids = [oci_core_network_security_group.public_lb_nsg.id]
 
   is_private                     = false
   is_preserve_source_destination = false
-
-  freeform_tags = {
-    "provisioner"           = "terraform"
-    "environment"           = var.environment
-  }
 }
 
 # HTTP

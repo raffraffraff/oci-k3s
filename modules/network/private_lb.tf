@@ -4,14 +4,9 @@ resource "oci_load_balancer_load_balancer" "k3s_load_balancer" {
   }
 
   compartment_id = var.compartment_ocid
-  display_name   = var.k3s_load_balancer_name
-  shape          = var.public_lb_shape
+  display_name   = "K3s Private Load Balancer"
+  shape          = "flexible"
   subnet_ids     = [oci_core_subnet.oci_core_subnet11.id]
-
-  freeform_tags = {
-    "provisioner"           = "terraform"
-    "environment"           = "${var.environment}"
-  }
 
   ip_mode    = "IPV4"
   is_private = true

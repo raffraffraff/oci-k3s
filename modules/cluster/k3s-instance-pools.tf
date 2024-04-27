@@ -38,13 +38,6 @@ resource "oci_core_instance_pool" "k3s_servers" {
     load_balancer_id = var.lb_id
     vnic_selection   = "PrimaryVnic"
   }
-
-  freeform_tags = {
-    "provisioner"           = "terraform"
-    "environment"           = "${var.environment}"
-    "k3s-cluster-name"      = "${var.cluster_name}"
-    "k3s-instance-type"     = "k3s-server"
-  }
 }
 
 resource "oci_core_instance_pool" "k3s_workers" {
@@ -72,13 +65,6 @@ resource "oci_core_instance_pool" "k3s_workers" {
     load_balancer_id = var.nlb_id
     port             = 443
     vnic_selection   = "PrimaryVnic"
-  }
-
-  freeform_tags = {
-    "provisioner"           = "terraform"
-    "environment"           = "${var.environment}"
-    "k3s-cluster-name"      = "${var.cluster_name}"
-    "k3s-instance-type"     = "k3s-worker"
   }
 
   depends_on = [
