@@ -1,4 +1,4 @@
-resource "oci_load_balancer_load_balancer" "k3s_load_balancer" {
+resource "oci_load_balancer_load_balancer" "k3s_private_lb" {
   lifecycle {
     ignore_changes = [network_security_group_ids]
   }
@@ -19,7 +19,7 @@ resource "oci_load_balancer_load_balancer" "k3s_load_balancer" {
 
 resource "oci_load_balancer_listener" "k3s_kube_api_listener" {
   default_backend_set_name = oci_load_balancer_backend_set.k3s_kube_api_backend_set.name
-  load_balancer_id         = oci_load_balancer_load_balancer.k3s_load_balancer.id
+  load_balancer_id         = oci_load_balancer_load_balancer.k3s_private_lb.id
   name                     = "K3s__kube_api_listener"
   port                     = 6443
   protocol                 = "TCP"
@@ -30,7 +30,7 @@ resource "oci_load_balancer_backend_set" "k3s_kube_api_backend_set" {
     protocol = "TCP"
     port     = 6443
   }
-  load_balancer_id = oci_load_balancer_load_balancer.k3s_load_balancer.id
+  load_balancer_id = oci_load_balancer_load_balancer.k3s_private_lb.id
   name             = "K3s__kube_api_backend_set"
   policy           = "ROUND_ROBIN"
 }

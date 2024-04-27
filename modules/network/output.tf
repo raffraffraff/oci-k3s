@@ -19,11 +19,11 @@ output "nlb_ip_address" {
 }
 
 output "lb_id" {
-  value = oci_load_balancer_load_balancer.k3s_load_balancer.id
+  value = oci_load_balancer_load_balancer.k3s_private_lb.id
 }
 
 output "lb_ip_address" {
-  value = oci_load_balancer_load_balancer.k3s_load_balancer.ip_address_details[0].ip_address
+  value = oci_load_balancer_load_balancer.k3s_private_lb.ip_address_details[0].ip_address
 }
 
 output "workers_subnet_id" {
