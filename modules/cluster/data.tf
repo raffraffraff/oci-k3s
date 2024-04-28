@@ -19,10 +19,10 @@ data "cloudinit_config" "k3s_server_tpl" {
       nginx_ingress_release             = var.nginx_ingress_release,
       compartment_ocid                  = var.compartment_ocid,
       availability_domain               = var.availability_domain,
-      k3s_url                           = var.lb_ip_address
-      k3s_tls_san                       = var.lb_ip_address
+      k3s_url                           = var.private_lb_ip_address
+      k3s_tls_san                       = var.private_lb_ip_address
+      k3s_tls_san_public                = var.public_nlb_ip_address,
       expose_kubeapi                    = var.expose_kubeapi,
-      k3s_tls_san_public                = var.nlb_ip_address,
       install_longhorn                  = var.install_longhorn,
       longhorn_release                  = var.longhorn_release,
       ingress_controller_http_nodeport  = var.ingress_controller_http_nodeport,
@@ -43,7 +43,7 @@ data "cloudinit_config" "k3s_worker_tpl" {
       k3s_token                         = random_password.k3s_token.result,
       is_k3s_server                     = false,
       disable_ingress                   = var.disable_ingress,
-      k3s_url                           = var.lb_ip_address
+      k3s_url                           = var.private_lb_ip_address
       install_longhorn                  = var.install_longhorn,
       ingress_controller_http_nodeport  = var.ingress_controller_http_nodeport,
       ingress_controller_https_nodeport = var.ingress_controller_https_nodeport,

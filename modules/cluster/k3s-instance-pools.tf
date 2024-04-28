@@ -13,14 +13,14 @@ resource "oci_core_instance_pool" "k3s_servers" {
 
   load_balancers {
     backend_set_name = "k3s_http_backend"
-    load_balancer_id = var.nlb_id
+    load_balancer_id = var.public_nlb_id
     port             = 80
     vnic_selection   = "PrimaryVnic"
   }
 
   load_balancers {
     backend_set_name = "k3s_https_backend"
-    load_balancer_id = var.nlb_id
+    load_balancer_id = var.public_nlb_id
     port             = 443
     vnic_selection   = "PrimaryVnic"
   }
@@ -28,14 +28,14 @@ resource "oci_core_instance_pool" "k3s_servers" {
   load_balancers {
     backend_set_name = "k3s_kubeapi_backend"
     port             = 6443
-    load_balancer_id = var.nlb_id 
+    load_balancer_id = var.public_nlb_id 
     vnic_selection   = "PrimaryVnic"
   }
 
   load_balancers {
     backend_set_name = "K3s__kube_api_backend_set"
     port             = 6443
-    load_balancer_id = var.lb_id
+    load_balancer_id = var.private_lb_id
     vnic_selection   = "PrimaryVnic"
   }
 }
@@ -55,14 +55,14 @@ resource "oci_core_instance_pool" "k3s_workers" {
 
   load_balancers {
     backend_set_name = "k3s_http_backend"
-    load_balancer_id = var.nlb_id
+    load_balancer_id = var.public_nlb_id
     port             = 80
     vnic_selection   = "PrimaryVnic"
   }
 
   load_balancers {
     backend_set_name = "k3s_https_backend"
-    load_balancer_id = var.nlb_id
+    load_balancer_id = var.public_nlb_id
     port             = 443
     vnic_selection   = "PrimaryVnic"
   }

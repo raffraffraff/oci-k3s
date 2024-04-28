@@ -19,11 +19,11 @@ module "cluster" {
   cluster_name                 = var.cluster_name
   public_key_path              = var.public_key_path
   os_image_id                  = var.os_image_id
-  lb_id                        = module.network.lb_id
-  lb_ip_address                = module.network.lb_ip_address
-  nlb_id                       = module.network.nlb_id
-  nlb_ip_address               = module.network.nlb_ip_address
+  public_nlb_id                = module.network.public_nlb_id
+  public_nlb_ip_address        = module.network.public_nlb_ip_address
+  private_lb_id                = module.network.private_lb_id
+  private_lb_ip_address        = module.network.private_lb_ip_address
   workers_subnet_id            = module.network.workers_subnet_id
-  workers_http_nsg_id          = module.network.workers_http_nsg_id
-  servers_kubeapi_nsg_id       = module.network.servers_kubeapi_nsg_id
+  workers_http_nsg_id          = module.network.private_lb_security_group
+  servers_kubeapi_nsg_id       = module.network.public_nlb_security_group
 }

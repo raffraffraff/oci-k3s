@@ -109,19 +109,19 @@ variable "ingress_controller_https_nodeport" {
   default = 30443
 }
 
-variable "lb_id" {
+variable "private_lb_id" {
   type    = string
 }
 
-variable "lb_ip_address" {
+variable "private_lb_ip_address" {
   type    = string
 }
 
-variable "nlb_id" {
+variable "public_nlb_id" {
   type    = string
 }
 
-variable "nlb_ip_address" {
+variable "public_nlb_ip_address" {
   type    = string
 }
 
