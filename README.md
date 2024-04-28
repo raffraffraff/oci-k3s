@@ -17,8 +17,7 @@ DISCLAIMERS:
 
 2. This isn't a production grade setup because it deploys a single k3s server. If you lose that node, the cluster is dead. See the availability section at the end of this readme for backup/restore instructions.
 
-# Before you begin
-## Pre-requisites
+# Pre-requisites
 1. Oracle Cloud account (sign up [here](https://signup.cloud.oracle.com0) and upgrade to a paid account)
 2. Download and install the following:
    - [terraform](https://www.terraform.io/downloads)
@@ -29,11 +28,6 @@ DISCLAIMERS:
    - [flux](https://fluxcd.io/flux/installation/) (optional)
    - [jq](https://jqlang.github.io/jq/download/) (optional)
 
-## Network Security
-Some facts about OCI:
-- Security Lists apply to all VNICs in the VCN. We'll use that to allow ssh (port 22) access from our home IP address
-- Network Security Groups only affect resources they're attached to (eg: instances, load balancers)
-
 # Terraform
 This project contains two modules:
 - network: deploys VCN, security groups and rules, load balancers etc
@@ -43,14 +37,6 @@ Once Kubernetes is running, the server bootstrap script deploys:
 - Longhorn (CSI, provides persistent volumes using instance local storage)
 - Traefic ingress controller (installed automatically, using Helm)
 - Metrics Server (installed automatically, using kubectl apply)
-
-## Missing pieces...
-To make it easier to deploy real stuff to the cluster, we still need:
-- cert-manager
-- external-dns
-- a domain!
-
-However, I haven't gotten to this yet. Also, you might want to use HTTPS01 or DNS01 ACME challenges for cert manager, and you might have a totally different DNS provider. I might add my Cloudflare setup to this project, with example `values.yaml` files for cert-manager and external-dns helm charts.
 
 # Deploying it!
 ## Create an `env.auto.tfvars` file
@@ -114,8 +100,21 @@ kubectl config view --flatten
 
 If the output looks good, pipe it to `~/.kube/config`. 
 
+# Network Security
+## Security List
+Security Lists apply to all VNICs in the VCN. We'll use that to allow ssh (port 22) access from our home IP address to all k3s nodes.
+
+## Public Network Load Balancer & Security Group
+This deploys a public NLB to allow ingress into the cluster, and allow access to the kubeapi from your home IP. Only the k3s server is added to the backend set. The listeners / rules are:
+- http (port 80), accessible from anywhere
+- https (port 443), accessible from anywhere
+- kubeapi (port 6443), accessible only from your home IP address
+
+## Private Load Balancer & Security Group
+We also deploy a private LB that the k3s workers use to reach the kubeapi internally. It also contains backends for ports 80 and 443. All nodes are added to this backend set. the cluster nodes reach services on other nodes. The security group only allows traffic from the public load balancer.
+
 # Next Steps: GitOps
-The most popular options right now are FluxCD and ArgoCD. I'm going with FluxCD because I know it better, and it consumes fewer resources.
+This project does not attempt to deploy important things like Cert Manager, External DNS, Sealed Secrets etc. These items are better off being deployed by a GitOps solution like FluxCD or ArgoCD. This is an extremely high-level description of how I proceeded with my FluxCD deployment after creating my cluster...
 
 ## Create a Git repo and a temporary fine-grained authorization token
 I'm using github, so if you're using some other source control, modify these instructions.
@@ -212,7 +211,7 @@ resources:
 
 ## Deploy something useful, with GitOps!
 The most obvious next steps for me were to deploy:
-- Bitnami sealed-secrets, which provide a safe way to check encrypted secrets into my git repo
+- Bitnami sealed-secrets, which provide a safe way to check encrypted secrets into my git repo (NOTE: enable sealed secrets ingress!)
 - Cert Manager, which automatically fetches certs from LetsEncrypt when I deploy a new ingress
 - External DNS, which automatically registers a new hostname on my domain when I deploy a new ingress
 
@@ -238,7 +237,7 @@ The most obvious next steps for me were to deploy:
 
 # Availability
 ## Server Backup / Restore
-This cluster has a single server, and if you lose that, it's game over. So it makes sense to back it up, and restore to a new server in the event of a failure. The official k3s [documentation](https://docs.k3s.io/datastore/backup-restore) makes it sound like a simple affair (back up the server token and db directory, and restore them afterwards) but it's not. A more detailed [backup/restore process](https://github.com/gilesknap/k3s-minecraft/blob/main/useful/deployed/backup-sqlite/README.md) can be summarize as follows...
+This cluster has a single server, so losing that means that your cluster is dead. Rebooting the node should be ok, but terminating the node would result in a brand new node that would run through the k3s bootstrap process all over again. You can back up your cluster, so that it can be restored after a k3s server redeploy. The official k3s [documentation](https://docs.k3s.io/datastore/backup-restore) makes it sound like a simple affair (back up the server token and db directory, and restore them afterwards) but it's not. A more detailed [backup/restore process](https://github.com/gilesknap/k3s-minecraft/blob/main/useful/deployed/backup-sqlite/README.md) can be summarize as follows...
 
 ### Backing up the server:
 * `systemctl stop k3s`
@@ -255,7 +254,7 @@ This cluster has a single server, and if you lose that, it's game over. So it ma
 * Restore `/etc/rancher/k3s/config.yaml`
 * `systemctl start k3s`
 
-That could probably be scripted, but we would have to modify the server template to detect a remote k3s server backup and restore it as part of the k3s installation process. 
+My goal is to add an object store to this terraform project and automate the process of detecting a backup and restoring it during the k3s server bootstrap process. For now though, you could try doing it manually.
 
 ## Worker node redundancy
 The workers are already redundant and will recover automatically in this setup. I tested this by selecting a random node (in my case, called "inst-canri-k3s-workers"") ran the following:
