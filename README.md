@@ -111,7 +111,7 @@ This deploys a public NLB to allow ingress into the cluster, and allow access to
 - kubeapi (port 6443), accessible only from your home IP address
 
 ## Private Load Balancer & Security Group
-We also deploy a private LB that the k3s workers use to reach the kubeapi internally. It also contains backends for ports 80 and 443. All nodes are added to this backend set. the cluster nodes reach services on other nodes. The security group only allows traffic from the public load balancer.
+We also deploy a private LB that the k3s workers use to reach the kubeapi internally. It also contains backends for ports 80 and 443. All nodes are added to this backend set. The security group only allows traffic from the public load balancer.
 
 # Next Steps: GitOps
 This project does not attempt to deploy important things like Cert Manager, External DNS, Sealed Secrets etc. These items are better off being deployed by a GitOps solution like FluxCD or ArgoCD. This is an extremely high-level description of how I proceeded with my FluxCD deployment after creating my cluster...
