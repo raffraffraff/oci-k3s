@@ -69,7 +69,7 @@ terraform apply
 ## Copy the kubeconfig from the server
 When you terraform apply finishes, terraform will output a bunch of IP addresses (yeah, these are also fake):
 ```
-nlb_ip_address = "151.183.24.123"
+nlb_ip_address = "148.101.24.123"
 servers_ips = [
   "151.182.123.14",
 ]
@@ -80,10 +80,10 @@ workers_ips = [
 ]
 ```
 
-You should copy the `/etc/rancher/k3s/k3s.yaml` from the server to your machine and update its `server:` address to that of the `nlb_ip_address`. Example:
+You should copy the `/etc/rancher/k3s/k3s.yaml` from the server to your machine and update its `server:` address to that of the `nlb_ip_address`. In the latest k3s this file is owned by root, and nobody else can read it, so you can grab it like this:
 ```
-scp ubuntu@151.182.123.14:/etc/rancher/k3s/k3s.yaml /tmp/
-sed -i '/server:/ s/127.0.0.1/151.183.24.123/' /tmp/k3s.yaml
+ssh ubuntu@148.101.123.14 sudo cat /etc/rancher/k3s/k3s.yaml > /tmp/k3s.yaml
+sed -i '/server:/ s/127.0.0.1/148.101.24.123/' /tmp/k3s.yaml
 ```
 
 You will probably want to rename the server, user and context to suit you, but otherwise you can test this right away by running:
