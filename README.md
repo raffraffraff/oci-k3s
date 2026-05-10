@@ -1,6 +1,6 @@
 # Wireguard server and 2 node K3S Cluster on Oracle OCI Free Tier
 This project allows you to deploy a Wireguard server and a k3s cluster on the Oracle's generous "always free" tier. You get:
-- 1 Wireguard server
+- 2 Wireguard servers
   - 1x AMD VCPU
   - 1GB RAM
   - 50GB block storage (it's the minimum, unfortunately)
@@ -28,10 +28,7 @@ inst-zqse8-k3s-servers   64m          3%       1130Mi          9%
 Not bad for a completely free cluster!
 
 DISCLAIMERS:
-
-1. The Ampere A1 instance shape used in this project is eligible for the free tier. But I found it extremely difficult to deploy this project, with OCI reporting that these instances are at full capacity in my region. I also found it impossible to deploy an instance pool with more than 2 instances in it (which I wanted for my workers). I decided to upgrade my account (which requires a credit card). And just like that, I could reliably deploy all 4 instances, and the worker instance pool had no problem with 3x instances. So this project basically requires an upgraded OCI account with a credit card on it. (But it still shouldn't cost you anything)
-
-2. This isn't a production grade setup because it deploys a single k3s server. If you lose that node, the cluster is dead. See the availability section at the end of this readme for backup/restore instructions.
+The Ampere A1 instance shape used in this project is eligible for the free tier. But I found it extremely difficult to deploy this project, with OCI reporting that these instances are at full capacity in my region. I also found it impossible to deploy an instance pool with more than 2 instances in it (which I wanted for my workers). I decided to upgrade my account (which requires a credit card). And just like that, I could reliably deploy all 4 instances, and the worker instance pool had no problem with 3x instances. So this project basically requires an upgraded OCI account with a credit card on it. (But it still shouldn't cost you anything)
 
 # Pre-requisites
 1. Oracle Cloud account (sign up [here](https://signup.cloud.oracle.com0) and upgrade to a paid account)
@@ -47,7 +44,7 @@ DISCLAIMERS:
    - Wireguard
 
 # Terraform
-This project contains three modules:
+This project contains four modules:
 - network: deploys VCN, security groups and rules, load balancers etc
 - wireguard: deploys an instance pool for Wireguard
 - mysql: deploys Oracle Heatwave database for the control plane
@@ -90,7 +87,7 @@ terraform plan
 terraform apply
 ```
 
-Just be aware: the MySQL Heatwave database can take at least 10 minutes to create. When terraform has finished, the output should look something like this:
+The MySQL Heatwave database can take at least 10 minutes to create. After the terraform apply completes, the  instances will continue upgrading, installing packages and finishing setup for at least another 5 mintues. When terraform has finished, the output should look something like this:
 
 ```
 ingress_nlb_ip_address = "132.92.151.10"
@@ -108,15 +105,26 @@ wg_client_bucket = {
 
 # Accessing the k3s cluster 
 
-## SSH to either of the servers
-This Terraform project allows SSH from the public IP address you used when you ran terraform apply. This means that you can ssh to either of the `server_ips`. 
+## SSH directly to the public IPs
+For now, this Terraform project allows SSH from the public IP address you used when you ran `terraform apply`. This means that you can ssh to either of the `server_ips`. 
 
 ```
 ssh ubuntu@132.93.136.18
 ```
 
+TODO: Add a variable to flag this on/off. Once the user has proven that the Wireguard VPN works, it's not necessary to allow SSH/ICMP from the user's home address (which will likely change!)
+
 ## Configure your .ssh/config for easier access
-To make it easy to ssh to the nodes, or create a port-forward tunnel, run `./ssh_config.sh` to generated ssh config entries for all servers deployed. If the output looks OK to you, direct the output of the script to your `~/.ssh/config` file. 
+To make it easy to ssh to the nodes, or create a port-forward tunnel, run `./ssh_config.sh` to generated ssh config entries for all servers deployed. If the output looks OK to you, direct the output of the script to your `~/.ssh/config` file:
+
+```
+./ssh_config.sh >> ~/.ssh/config
+```
+
+## Download the VPN configuration files
+Once the wireguard instances have finished installing and configuring Wireguard, they upload the client configurations to an OCI Object bucket. The `wg-conf.sh` script lets you download these configuration files. Once downloaded, you can connect immediately using `sudo wg-quick up <vpnconf>`.
+
+NOTE: I considered saving the Wireguard client configs to OCI Vault, but it's clunky to use from the cli. 
 
 ## Set up your kubeconfig
 Next, grab the k3s.yaml file from either of the servers. It's at the path `/etc/rancher/k3s/k3s.yaml`. These commands will grab it, rename the cluster to 'oci-k3s' and add it to your existing KUBECONFIG. It just writes it out to the terminal, so catch it in a file, double check it and copy it to ~/.kube/config if you are happy with it
@@ -157,14 +165,14 @@ ssh -O exit k3s-tunnel1
 
 # Wireguard VPN
 
-This project deploys a Wireguard VPN server on an AMD `VM.Standard.E2.1.Micro` instance (part of the Always Free tier). It gives you a secure tunnel into the private subnet, letting you reach the k3s nodes and MySQL instance without exposing them further to the internet.
+This project deploys a Wireguard VPN server pool using AMD `VM.Standard.E2.1.Micro` instance type (and you get two of these on the Always Free tier). This gives you two Wireguard VPN servers. If you edit the configuration and set AllowedIPs to '0.0.0.0/0' you can then use these as "Hide My IP Address!" VPNs.
 
 ## What gets created
 
-- A Wireguard instance in the private subnet with a public IP
-- A dedicated NSG allowing inbound UDP on the Wireguard port and SSH from your home IP
+- A Wireguard instance pool that ensures that there are always 2x instances running
+- A dedicated NSG allowing inbound UDP on the Wireguard port (from any host) and SSH (from your home IP)
 - An Object Storage bucket (`wireguard-client-configs`) where client configs are automatically
-  uploaded after the instance boots
+  uploaded after the instance finishes first-time setup
 - IAM policy allowing the instance to write to that bucket using instance principal auth
   (no credentials stored on the box)
 
@@ -188,11 +196,11 @@ terraform output wg_client_bucket
 oci os object get \
   --namespace <namespace> \
   --bucket-name wireguard-client-configs \
-  --name zenbook.conf \
-  --file ~/zenbook.conf
+  --name wireguard1-laptop.conf \
+  --file ~/wireguard1-laptop.conf
 
 # Connect
-wg-quick up ~/zenbook.conf
+wg-quick up ~/wireguard1-laptop.conf
 ```
 
 ## Re-deployment behaviour
